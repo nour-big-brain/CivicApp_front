@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -21,6 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.civicapp.ui.screens.HomeScreen
 import com.example.civicapp.ui.screens.MissionsScreen
+import com.example.civicapp.ui.screens.MessagingScreen
+import com.example.civicapp.ui.screens.NotificationsScreen
+import com.example.civicapp.ui.screens.ParticipationScreen
+import com.example.civicapp.ui.screens.ProfileScreen
 import com.example.civicapp.ui.theme.CivicAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -43,6 +50,10 @@ fun MainScreen() {
             when (selectedTab) {
                 0 -> HomeScreen()
                 1 -> MissionsScreen()
+                2 -> MessagingScreen()
+                3 -> NotificationsScreen()
+                4 -> ParticipationScreen()
+                5 -> ProfileScreen()
                 else -> HomeScreen()
             }
         }
@@ -59,6 +70,30 @@ fun MainScreen() {
                 label = { Text("Missions") },
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Mail, contentDescription = "Messages") },
+                label = { Text("Messages") },
+                selected = selectedTab == 2,
+                onClick = { selectedTab = 2 }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Notifications, contentDescription = "Notifications") },
+                label = { Text("Notifications") },
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.List, contentDescription = "Participations") },
+                label = { Text("Participations") },
+                selected = selectedTab == 4,
+                onClick = { selectedTab = 4 }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Person, contentDescription = "Profil") },
+                label = { Text("Profil") },
+                selected = selectedTab == 5,
+                onClick = { selectedTab = 5 }
             )
         }
     }
