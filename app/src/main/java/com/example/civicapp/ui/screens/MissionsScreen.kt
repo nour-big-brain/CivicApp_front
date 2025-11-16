@@ -12,13 +12,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +29,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,80 +40,145 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.civicapp.data.models.Mission
+import com.example.civicapp.viewModel.MissionViewModel
+
 
 @Composable
-fun MissionsScreen() {
+fun MissionsScreen(viewModel: MissionViewModel = viewModel()) {
+    val missions by viewModel.missions.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
+
     var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
     var showCreateForm by remember { mutableStateOf(false) }
 
+    // Load missions when screen opens
+    LaunchedEffect(Unit) {
+        viewModel.loadMissions()
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Search Bar
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Chercher une mission") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = "Chercher")
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
+        if (isLoading && missions.isEmpty()) {
+            // Loading state
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Search Bar
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { query ->
+                            searchQuery = query
+                            viewModel.searchMissions(query)
+                        },
+                        placeholder = { Text("Chercher une mission") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, contentDescription = "Chercher")
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
-            // Filter Chips
-            item {
-                Text(
-                    text = "Catégories",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                // Filter Chips
+                item {
+                    Text(
+                        text = "Catégories",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(5) { index ->
-                        val categories = listOf("Tous", "Environnement", "Social", "Éducation", "Santé")
-                        FilterChip(
-                            label = categories[index],
-                            isSelected = selectedCategory == categories[index],
-                            onClick = { selectedCategory = categories[index] }
-                        )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(listOf("Tous", "Environnement", "Social", "Éducation", "Santé")) { category ->
+                            FilterChip(
+                                label = category,
+                                isSelected = selectedCategory == category,
+                                onClick = { viewModel.filterByCategory(if (category == "Tous") null else category) }
+                            )
+                        }
                     }
                 }
-            }
 
-            // Missions List
-            item {
-                Text(
-                    text = "Missions disponibles",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
+                // Missions List Title
+                item {
+                    Text(
+                        text = "Missions disponibles",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
 
-            items(8) { index ->
-                MissionCard(
-                    title = "Nettoyage du parc",
-                    description = "Aidez-nous à nettoyer le parc central",
-                    category = "Environnement",
-                    date = "25 Nov 2024",
-                    location = "Parc Central",
-                    difficulty = "Facile",
-                    participants = "5/10"
-                )
-            }
+                // Missions List
+                if (missions.isEmpty() && !isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Aucune mission trouvée")
+                        }
+                    }
+                } else {
+                    items(missions) { mission ->
+                        MissionCard(mission = mission)
+                    }
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(100.dp))
+                item {
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+            }
+        }
+
+        // Error Dialog
+        error?.let { errorMsg ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Error",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(errorMsg)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TextButton(onClick = {   }) {
+                            Text("OK")
+                        }
+                    }
+                }
             }
         }
 
@@ -125,14 +193,88 @@ fun MissionsScreen() {
             Icon(Icons.Default.Add, contentDescription = "Créer mission", tint = MaterialTheme.colorScheme.onPrimary)
         }
 
-        // Dialog
+        // Create Mission Dialog
         if (showCreateForm) {
             CreateMissionDialog(
-                onDismiss = { showCreateForm = false },
-                onSubmit = { title, description, category ->
-                    showCreateForm = false
-                }
+                viewModel = viewModel,
+                onDismiss = { showCreateForm = false }
             )
+        }
+    }
+}
+
+@Composable
+fun MissionCard(mission: Mission) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = mission.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = mission.category,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            }
+
+            Text(
+                text = mission.description,
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "📍 ${mission.location}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "📅 ${mission.date}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "👥 ${mission.participants.size}/${mission.maxParticipants}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
     }
 }
@@ -163,97 +305,15 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun MissionCard(
-    title: String,
-    description: String,
-    category: String,
-    date: String,
-    location: String,
-    difficulty: String,
-    participants: String
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(6.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = category,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-            }
-
-            Text(
-                text = description,
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "📍 $location",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-                Text(
-                    text = "📅 $date",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-                Text(
-                    text = "👥 $participants",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun CreateMissionDialog(
-    onDismiss: () -> Unit,
-    onSubmit: (String, String, String) -> Unit
+    viewModel: MissionViewModel,
+    onDismiss: () -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -284,7 +344,7 @@ fun CreateMissionDialog(
                 TextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Titre de la mission") },
+                    label = { Text("Titre") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -314,6 +374,26 @@ fun CreateMissionDialog(
                     )
                 )
 
+                TextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    label = { Text("Localisation") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
+
+                TextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Date") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -327,7 +407,18 @@ fun CreateMissionDialog(
                         Text("Annuler")
                     }
                     TextButton(
-                        onClick = { onSubmit(title, description, category) },
+                        onClick = {
+                            val mission = Mission(
+                                title = title,
+                                description = description,
+                                category = category,
+                                location = location,
+                                date = date,
+                                createdAt = System.currentTimeMillis()
+                            )
+                            viewModel.createMission(mission)
+                            onDismiss()
+                        },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Créer")

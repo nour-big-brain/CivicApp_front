@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+    id("com.google.gms.google-services") version "4.4.4"
 }
 
 android {
@@ -73,4 +74,18 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // Firebase BOM (Bill of Materials) - manages all Firebase library versions
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+
+    // Firebase libraries
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-functions")
+    implementation("com.google.firebase:firebase-messaging")
+
+    // Kotlin Coroutines for Firebase async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }

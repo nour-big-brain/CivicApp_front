@@ -6,28 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.example.civicapp.ui.screens.HomeScreen
-import com.example.civicapp.ui.screens.MissionsScreen
-import com.example.civicapp.ui.screens.MessagingScreen
-import com.example.civicapp.ui.screens.NotificationsScreen
-import com.example.civicapp.ui.screens.ParticipationScreen
-import com.example.civicapp.ui.screens.ProfileScreen
+import com.example.civicapp.ui.navigation.BottomNavigationBar
+import com.example.civicapp.ui.navigation.ScreenContent
 import com.example.civicapp.ui.theme.CivicAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -46,55 +32,15 @@ fun MainScreen() {
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // Content area (takes most of the space)
         Box(modifier = Modifier.weight(1f)) {
-            when (selectedTab) {
-                0 -> HomeScreen()
-                1 -> MissionsScreen()
-                2 -> MessagingScreen()
-                3 -> NotificationsScreen()
-                4 -> ParticipationScreen()
-                5 -> ProfileScreen()
-                else -> HomeScreen()
-            }
+            ScreenContent(selectedTab)
         }
 
-        NavigationBar {
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Home, contentDescription = "Accueil") },
-                label = { Text("Accueil") },
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.List, contentDescription = "Missions") },
-                label = { Text("Missions") },
-                selected = selectedTab == 1,
-                onClick = { selectedTab = 1 }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Mail, contentDescription = "Messages") },
-                label = { Text("Messages") },
-                selected = selectedTab == 2,
-                onClick = { selectedTab = 2 }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Notifications, contentDescription = "Notifications") },
-                label = { Text("Notifications") },
-                selected = selectedTab == 3,
-                onClick = { selectedTab = 3 }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.List, contentDescription = "Participations") },
-                label = { Text("Participations") },
-                selected = selectedTab == 4,
-                onClick = { selectedTab = 4 }
-            )
-            NavigationBarItem(
-                icon = { Icon(Icons.Default.Person, contentDescription = "Profil") },
-                label = { Text("Profil") },
-                selected = selectedTab == 5,
-                onClick = { selectedTab = 5 }
-            )
-        }
+        // Navigation bar at bottom (fixed height)
+        BottomNavigationBar(
+            selectedTab = selectedTab,
+            onTabSelected = { selectedTab = it }
+        )
     }
 }
