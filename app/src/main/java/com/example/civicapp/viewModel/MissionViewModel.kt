@@ -1,4 +1,5 @@
 package com.example.civicapp.viewModel
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.civicapp.data.models.Mission
@@ -7,7 +8,72 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.civicapp.data.repository.ParticipationRepository
 
+class MissionViewModel(
+    private val missionRepo: MissionRepository = MissionRepository(),
+    private val participationRepo: ParticipationRepository = ParticipationRepository()
+) : ViewModel() {
+
+    private val _missions = MutableStateFlow<List<Mission>>(emptyList())
+    val missions: StateFlow<List<Mission>> = _missions
+
+    private val _operationState = MutableStateFlow<Result<Unit>?>(null)
+    val operationState: StateFlow<Result<Unit>?> = _operationState
+
+    fun loadAllMissions() {
+        viewModelScope.launch {
+            _missions.value = missionRepo.getAllMissions()
+        }
+    }
+
+    fun createMission(mission: Mission) {
+        viewModelScope.launch {
+            val success = missionRepo.createMission(mission)
+            _operationState.value = if (success) Result.success(Unit) else Result.failure(Exception("Failed to create mission"))
+            loadAllMissions()
+        }
+    }
+
+    fun joinMission(userId: String, missionId: String) {
+        viewModelScope.launch {
+            val success = participationRepo.joinMission(userId, missionId)
+            _operationState.value = if (success) Result.success(Unit) else Result.failure(Exception("Failed to join mission"))
+            loadAllMissions()
+        }
+    }
+
+    fun leaveMission(userId: String, missionId: String) {
+        viewModelScope.launch {
+            val success = participationRepo.leaveMission(userId, missionId)
+            _operationState.value = if (success) Result.success(Unit) else Result.failure(Exception("Failed to leave mission"))
+            loadAllMissions()
+        }
+    }
+
+    fun updateMissionStatus(missionId: String, creatorId: String, status: String) {
+        viewModelScope.launch {
+            val success = missionRepo.updateMissionStatus(missionId, creatorId, status)
+            _operationState.value = if (success) Result.success(Unit) else Result.failure(Exception("Failed to update status"))
+            loadAllMissions()
+        }
+    }
+
+    fun searchMissions(query: String) {
+        viewModelScope.launch {
+            _missions.value = missionRepo.searchMissions(query)
+        }
+    }
+
+    fun filterMissionsByCategory(category: String) {
+        viewModelScope.launch {
+            _missions.value = missionRepo.getMissionsByCategory(category)
+        }
+    }
+}
+
+
+/*
 class MissionViewModel : ViewModel() {
     private val repo = MissionRepository()
 
@@ -125,3 +191,5 @@ class MissionViewModel : ViewModel() {
         }
     }
 }
+
+ */

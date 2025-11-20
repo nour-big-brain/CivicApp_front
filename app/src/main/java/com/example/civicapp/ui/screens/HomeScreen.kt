@@ -2,7 +2,6 @@ package com.example.civicapp.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,23 +9,107 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.civicapp.viewModel.AuthViewModel
+import com.example.civicapp.viewModel.MissionViewModel
+import androidx.compose.foundation.lazy.items
+@Composable
+fun HomeScreen(
+    missionViewModel: MissionViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val missions by missionViewModel.missions.collectAsState()
+    val currentUser by authViewModel.user.collectAsState()
 
+    // Load missions on screen start
+    LaunchedEffect(Unit) {
+        missionViewModel.loadAllMissions()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
+    ) {
+        // Greeting / Header
+        Text(
+            text = "Bonjour, ${currentUser?.name ?: "Utilisateur"} !",
+            fontSize = 28.sp,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Découvrez les missions disponibles et participez",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Quick Actions Row
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = { /* Navigate to ParticipationScreen */ },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Mes Participations")
+            }
+            OutlinedButton(
+                onClick = { /* Navigate to Create Mission Screen */ },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Créer Mission")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Missions List
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(missions) { mission ->
+                MissionCard(
+                    mission = mission,
+                    onJoin = { missionViewModel.joinMission(
+                        userId = currentUser?.id ?: "",
+                        missionId = mission.id
+                    ) },
+                    onLeave = { missionViewModel.leaveMission(
+                        userId = currentUser?.id ?: "",
+                        missionId = mission.id
+                    ) }
+                )
+            }
+        }
+    }
+}
+/*
 @Composable
 fun HomeScreen() {
     LazyColumn(
@@ -229,3 +312,5 @@ fun MissionCardHome(
         }
     }
 }
+
+ */

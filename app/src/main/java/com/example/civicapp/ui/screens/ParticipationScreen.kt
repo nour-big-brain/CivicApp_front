@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -34,7 +32,198 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.civicapp.data.models.Mission
+import com.example.civicapp.ui.utils.DateTimeUtils
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 
+@Composable
+fun ParticipationScreen(
+    missions: List<Mission> // You can provide your missions list from a ViewModel
+) {
+    var selectedTab by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Header
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Mes Participations",
+                fontSize = 28.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Suivez vos missions en cours et passées",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            )
+        }
+
+        // Tabs
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TabButton("En cours", selectedTab == 0) { selectedTab = 0 }
+            TabButton("Complétées", selectedTab == 1) { selectedTab = 1 }
+            TabButton("Annulées", selectedTab == 2) { selectedTab = 2 }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Content
+        Box(modifier = Modifier.weight(1f)) {
+            when (selectedTab) {
+                0 -> MissionsTab(missions.filter { it.status == "pending" })
+                1 -> MissionsTab(missions.filter { it.status == "completed" })
+                2 -> MissionsTab(missions.filter { it.status == "canceled" })
+            }
+        }
+    }
+}
+
+@Composable
+fun TabButton(label: String, isSelected: Boolean, onClick: () -> Unit) {
+    if (isSelected) {
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp),
+            shape = RoundedCornerShape(8.dp)
+        ) { Text(label, fontSize = 12.sp) }
+    } else {
+        OutlinedButton(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp),
+            shape = RoundedCornerShape(8.dp)
+        ) { Text(label, fontSize = 12.sp) }
+    }
+}
+
+@Composable
+fun MissionsTab(missions: List<Mission>) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(missions.size) { index ->
+            ParticipationCard(missions[index])
+        }
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+    }
+}
+
+@Composable
+fun ParticipationCard(mission: Mission) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Title & Status
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = mission.title,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = when (mission.status) {
+                                "pending" -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                                "completed" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                "canceled" -> MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                                else -> MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = mission.status.replaceFirstChar { it.uppercase() },
+                        fontSize = 11.sp,
+                        color = when (mission.status) {
+                            "pending" -> MaterialTheme.colorScheme.tertiary
+                            "completed" -> MaterialTheme.colorScheme.primary
+                            "canceled" -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+            }
+
+            // Date & Location
+            Text(
+                text = "📅 ${DateTimeUtils.formatDateTime(mission.dateMillis)}",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Text(
+                text = "📍 ${mission.location}",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+
+            // Participants
+            if (mission.participantsCount > 0) {
+                Text(
+                    text = "👥 ${mission.participantsCount} participant(s)",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { /* Withdraw logic */ },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp)
+                ) { Text("Se retirer", fontSize = 12.sp) }
+
+                Button(
+                    onClick = { /* Details logic */ },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp)
+                ) { Text("Détails", fontSize = 12.sp) }
+            }
+        }
+    }
+}
+
+
+/*
 @Composable
 fun ParticipationScreen() {
     var selectedTab by remember { mutableStateOf(0) }
@@ -437,3 +626,5 @@ fun ParticipationCard(
         }
     }
 }
+
+ */

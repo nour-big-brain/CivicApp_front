@@ -1,10 +1,29 @@
 package com.example.civicapp.data.repository
 
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.tasks.await
+import com.google.firebase.firestore.FirebaseFirestore
 
+
+class FirebaseRepository(
+    val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+) {
+
+    // --- USER HELPERS ---
+    fun getCurrentUserId(): String? = auth.currentUser?.uid
+
+    fun isUserLoggedIn(): Boolean = auth.currentUser != null
+
+    fun signOut() = auth.signOut()
+
+    val usersCollection = db.collection("users")
+    val missionsCollection = db.collection("missions")
+    val chatsCollection = db.collection("chats")
+
+}
+
+/*
+old code
 class FirebaseRepository {
     private val db = Firebase.firestore
     private val auth = FirebaseAuth.getInstance()
@@ -53,3 +72,5 @@ class FirebaseRepository {
         // Will implement in next step
     }
 }
+
+ */

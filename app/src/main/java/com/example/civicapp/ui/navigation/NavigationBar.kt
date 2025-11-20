@@ -12,14 +12,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-
 @Composable
 fun BottomNavigationBar(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
     NavigationBar {
-        // Home Tab
+        // Home Tab (index 0)
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = null) },
             label = { Text("Home") },
@@ -27,7 +26,7 @@ fun BottomNavigationBar(
             onClick = { onTabSelected(0) }
         )
 
-        // Missions Tab
+        // Missions Tab (index 1)
         NavigationBarItem(
             icon = { Icon(Icons.Default.List, contentDescription = null) },
             label = { Text("Missions") },
@@ -35,7 +34,7 @@ fun BottomNavigationBar(
             onClick = { onTabSelected(1) }
         )
 
-        // Messaging Tab
+        // Chats Tab (index 2)
         NavigationBarItem(
             icon = { Icon(Icons.Default.Mail, contentDescription = null) },
             label = { Text("Chats") },
@@ -43,7 +42,7 @@ fun BottomNavigationBar(
             onClick = { onTabSelected(2) }
         )
 
-        // Notifications Tab
+        // Notifications Tab (index 3)
         NavigationBarItem(
             icon = { Icon(Icons.Default.Notifications, contentDescription = null) },
             label = { Text("Alerts") },
@@ -51,7 +50,7 @@ fun BottomNavigationBar(
             onClick = { onTabSelected(3) }
         )
 
-        // Participation Tab
+        // Participation Tab (index 4)
         NavigationBarItem(
             icon = { Icon(Icons.Default.BookmarkBorder, contentDescription = null) },
             label = { Text("My Tasks") },
@@ -59,7 +58,7 @@ fun BottomNavigationBar(
             onClick = { onTabSelected(4) }
         )
 
-        // Profile Tab
+        // Profile Tab (index 5)
         NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = null) },
             label = { Text("Profile") },

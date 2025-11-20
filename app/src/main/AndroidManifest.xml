@@ -13,9 +13,9 @@
         android:theme="@style/Theme.CivicApp"
         tools:targetApi="33">
 
-        <!-- Splash Activity (Entry Point) -->
+        <!-- Main Activity (ONLY Entry Point) -->
         <activity
-            android:name=".ui.activities.SplashActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.CivicApp">
             <intent-filter>
@@ -23,18 +23,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Login Activity -->
-        <activity
-            android:name=".ui.activities.LoginActivity"
-            android:exported="false"
-            android:theme="@style/Theme.CivicApp" />
-
-        <!-- Main Activity -->
-        <activity
-            android:name="com.example.civicapp.MainActivity"
-            android:exported="false"
-            android:theme="@style/Theme.CivicApp" />
 
     </application>
 

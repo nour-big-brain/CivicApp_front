@@ -2,7 +2,6 @@ package com.example.civicapp.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,33 +9,135 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.civicapp.data.models.Message
+import com.example.civicapp.viewModel.AuthViewModel
+import com.example.civicapp.viewModel.ChatViewModel
 
+@Composable
+fun MessagingScreen(
+    authViewModel: AuthViewModel,
+    chatViewModel: ChatViewModel,
+    chatroomId: String
+) {
+    // Get current user ID from AuthViewModel
+    val currentUserId by remember {
+        mutableStateOf(authViewModel.getCurrentUserId() ?: "")
+    }
+    val currentUserName by remember {
+        mutableStateOf(authViewModel.getCurrentUserName() ?: "Unknown")
+    }
+
+    // Collect messages as state from Flow<List<Message>>
+    val messages by chatViewModel
+        .getMessages(chatroomId)
+        .collectAsState(initial = emptyList())
+
+    var newMessage by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Chat",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // Messages List
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            reverseLayout = true
+        ) {
+            items(messages.size) { index ->
+                val message = messages[messages.size - 1 - index]
+                MessageItem(message = message, currentUserId = currentUserId)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Input field and send button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            BasicTextField(
+                value = newMessage,
+                onValueChange = { newMessage = it },
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color(0xFFEFEFEF), shape = MaterialTheme.shapes.small)
+                    .padding(8.dp),
+                singleLine = true
+            )
+            Button(
+                onClick = {
+                    if (newMessage.isNotBlank() && currentUserId.isNotBlank()) {
+                        chatViewModel.sendMessage(
+                            chatId = chatroomId,
+                            senderId = currentUserId,
+                            senderName = currentUserName,
+                            content = newMessage
+                        )
+                        newMessage = ""
+                    }
+                }
+            ) {
+                Text("Envoyer")
+            }
+        }
+    }
+}
+
+@Composable
+fun MessageItem(message: Message, currentUserId: String) {
+    val isMine = message.senderId == currentUserId
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start
+    ) {
+        Surface(
+            color = if (isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            shape = MaterialTheme.shapes.medium,
+            shadowElevation = 2.dp,
+            modifier = Modifier.padding(4.dp)
+        ) {
+            Column(modifier = Modifier.padding(8.dp)) {
+                Text(
+                    text = message.senderName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isMine) Color.White else MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = message.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isMine) Color.White else MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
+}
+/*
 @Composable
 fun MessagingScreen() {
     var searchQuery by remember { mutableStateOf("") }
@@ -334,3 +435,4 @@ data class Message(
     val isCurrentUser: Boolean,
     val time: String
 )
+ */
